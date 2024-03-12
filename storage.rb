@@ -15,7 +15,16 @@ class Storage
   end
 
   def get_file_ids_by(group)
-    @db.query "SELECT file_id, FROM files WHERE group=?", group
+    @db.query "SELECT file_id FROM files WHERE group=?", group
+  end
+
+  def get_group_id_by_name(name)
+    query = @db.query "SELECT id FROM groups WHERE name=?", name
+    query.first
+  end
+
+  def get_group_names
+    @db.query "SELECT name FROM groups"
   end
 
   private
@@ -32,7 +41,7 @@ class Storage
     @db.execute <<-SQL
       CREATE TABLE IF NOT EXISTS groups(
         id INTEGER PRIMARY KEY NOT NULL,
-        name VARCHAR(64) NOT NULL UNIQUE
+        name VARCHAR(64) NOT NULL
       )
     SQL
   end
