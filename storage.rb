@@ -14,8 +14,8 @@ class Storage
     @db.execute "INSERT INTO groups (name) VALUES (?)", name
   end
 
-  def get_file_ids_by(group)
-    @db.query "SELECT file_id FROM files WHERE group=?", group
+  def get_file_ids_by(group_id)
+    @db.query("SELECT file_id FROM files WHERE group_id=?", group_id).to_a.flatten
   end
 
   def get_group_id_by_name(name)
@@ -24,7 +24,7 @@ class Storage
   end
 
   def get_group_names
-    @db.query "SELECT name FROM groups"
+    @db.query("SELECT name FROM groups").to_a.flatten
   end
 
   private
