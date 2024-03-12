@@ -19,8 +19,7 @@ class Storage
   end
 
   def get_group_id_by_name(name)
-    query = @db.query "SELECT id FROM groups WHERE name=?", name
-    query.first
+    @db.query("SELECT id FROM groups WHERE name=?", name).to_a.flatten
   end
 
   def get_group_names

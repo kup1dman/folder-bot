@@ -17,7 +17,7 @@ class Client
   def initialize
     @storage = Storage.new
     @state = STATES[:normal]
-    @group_id = nil
+    @current_group_id = nil #плохо
   end
 
   def start
@@ -36,6 +36,7 @@ class Client
           send_message(bot, message, "Привет. Что хотите сделать", reply_markup: keyboard)
         else
           handle_replies(bot, message)
+          process_sending_files(bot, message) if STATES[:sending_files]
         end
       when Telegram::Bot::Types::CallbackQuery
         case message.data
@@ -47,18 +48,26 @@ class Client
           keyboard = create_inline_keyboard(names.count, names, callback_dates)
           send_message(bot, message, "Выберите группу", reply_markup: keyboard)
         when /^\/pick_\w+$/
-          group_name = message.data[6..].gsub('_', ' ')
+          group_name = message.data[6..].gsub('_', ' ') #плохо
+          @current_group_id = @storage.get_group_id_by_name(group_name)
           prepare_group_info(bot, message, group_name)
+        when COMMANDS[:add_files]
+          send_message(bot, message, "Отправляйте файлы. Закончили? Вызывайте /done")
+          @state = STATES[:sending_files]
         end
       end
-
     end
   end
 
   def handle_replies(bot, message)
+    return if message.reply_to_message.nil?
+
     case message.reply_to_message.text
     when "Назовите группу"
       group_name = message.text
+      @storage.write_to_groups_table(group_name)
+      send_message(bot, message, "Группа создана!")
+      @current_group_id = @storage.get_group_id_by_name(group_name)
       prepare_group_info(bot, message, group_name)
     end
   end
@@ -92,26 +101,20 @@ class Client
     kb
   end
 
-  def process_grouping_files(bot, message)
+  def process_sending_files(bot, message)
     if message.document
       if message.document.is_a?(Array)
         message.document.each do |doc|
-          @storage.write_to_files_table(doc.file_id, @group_id)
+          @storage.write_to_files_table(doc.file_id, @current_group_id)
         end
       else
-        @storage.write_to_files_table(message.document.file_id, @group_id)
+        @storage.write_to_files_table(message.document.file_id, @current_group_id)
       end
     end
 
     if message.text == COMMANDS[:done]
       send_message(bot, message, "Файлы сохранены.")
       @state = STATES[:normal]
-    end
-
-    if message.reply_to_message
-      @storage.write_to_groups_table(message.text) until @storage.get_group_names.include?(message.text)
-      @group_id = @storage.get_group_id_by_name(message.text)
-      send_message(bot, message, "Отправляйте файлы. Закончили? Вызывайте /done")
     end
   end
 
