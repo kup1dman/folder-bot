@@ -1,5 +1,6 @@
 class Client
   COMMANDS = {
+    start: '/start',
     menu: '/menu',
     group_files: '/group_files',
     done: '/done',
@@ -31,21 +32,24 @@ class Client
       case message
       when Telegram::Bot::Types::Message
         case message.text
-        when COMMANDS[:menu]
-          keyboard = create_inline_keyboard(2, ["Создать группу", "Список групп"], [COMMANDS[:create_group], COMMANDS[:list_of_groups]])
-          send_message(bot, message, "Привет. Что хотите сделать", reply_markup: keyboard)
+        when COMMANDS[:start]
+          keyboard = create_inline_keyboard(1, ["Меню"], [COMMANDS[:menu]])
+          send_message(bot, message, "Привет, я FolderBot", reply_markup: keyboard)
         else
           handle_replies(bot, message)
           process_sending_files(bot, message) if STATES[:sending_files]
         end
       when Telegram::Bot::Types::CallbackQuery
         case message.data
+        when COMMANDS[:menu]
+          keyboard = create_inline_keyboard(2, ["Создать группу", "Список групп"], [COMMANDS[:create_group], COMMANDS[:list_of_groups]])
+          send_message(bot, message, "Что хотите сделать", reply_markup: keyboard)
         when COMMANDS[:create_group]
           send_message(bot, message, "Назовите группу", reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
         when COMMANDS[:list_of_groups]
           names = @storage.get_group_names
           callback_dates = names.map { |name| "/pick_#{name.gsub(' ', '_')}" }
-          keyboard = create_inline_keyboard(names.count, names, callback_dates)
+          keyboard = create_inline_keyboard(names.count + 1, names.push("Назад в меню"), callback_dates.push(COMMANDS[:menu]))
           send_message(bot, message, "Выберите группу", reply_markup: keyboard)
         when /^\/pick_\w+$/
           group_name = message.data[6..].gsub('_', ' ') #плохо
@@ -80,7 +84,7 @@ class Client
     else
       send_media_group(bot, message, create_input_media_document(file_ids))
     end
-    keyboard = create_inline_keyboard(2, ["Добавить файлы", "Назад"], [COMMANDS[:add_files], COMMANDS[:back]])
+    keyboard = create_inline_keyboard(2, ["Добавить файлы", "Назад в список групп"], [COMMANDS[:add_files], COMMANDS[:list_of_groups]])
     send_message(bot, message, "Список действий", reply_markup: keyboard)
   end
 
@@ -89,16 +93,15 @@ class Client
   end
 
   def create_inline_keyboard(button_count, button_texts, callback_dates)
-    kb = create_inline_buttons(button_count, button_texts, callback_dates)
+    kb = []
+    button_count.times do |i|
+      kb.push(create_inline_button(button_texts[i], callback_dates[i]))
+    end
     Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [kb])
   end
 
-  def create_inline_buttons(button_count, button_texts, callback_dates)
-    kb = []
-    button_count.times do |i|
-      kb.push(Telegram::Bot::Types::InlineKeyboardButton.new(text: button_texts[i], callback_data: callback_dates[i]))
-    end
-    kb
+  def create_inline_button(button_text, callback_date)
+    Telegram::Bot::Types::InlineKeyboardButton.new(text: button_text, callback_data: callback_date)
   end
 
   def process_sending_files(bot, message)
@@ -113,7 +116,8 @@ class Client
     end
 
     if message.text == COMMANDS[:done]
-      send_message(bot, message, "Файлы сохранены.")
+      keyboard = create_inline_keyboard(1, ["Назад в список групп"], [COMMANDS[:list_of_groups]])
+      send_message(bot, message, "Файлы сохранены.", reply_markup: keyboard)
       @state = STATES[:normal]
     end
   end
