@@ -5,6 +5,8 @@ class Client
     group_files: '/group_files',
     done: '/done',
     create_group: '/create_group',
+    edit_name_group: '/edit_name_group',
+    delete_group: '/delete_group',
     list_of_groups: '/list_of_groups',
     add_files: '/add_files',
     back: '/back',
@@ -47,6 +49,7 @@ class Client
           current_bot_message = edit_message(bot, @state.current_message, "Что хотите сделать", reply_markup: keyboard)
           @state.set_current_message(current_bot_message)
         when COMMANDS[:create_group]
+          delete_message(bot, @state.current_message)
           send_message(bot, message, "Назовите группу", reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
         when COMMANDS[:list_of_groups]
           names = @storage.get_group_names
@@ -57,12 +60,22 @@ class Client
           current_bot_message = edit_message(bot, @state.current_message, "Выберите группу", reply_markup: keyboard)
           @state.set_current_message(current_bot_message)
         when /^\/pick_\w+$/
+          delete_message(bot, @state.current_message)
           group_name = message.data[6..].gsub('_', ' ') #плохо
           @state.set_current_group(@storage.get_group_id_by_name(group_name))
           prepare_group_info(bot, message, group_name)
         when COMMANDS[:add_files]
+          delete_message(bot, @state.current_message)
           send_message(bot, message, "Отправляйте файлы. Закончили? Вызывайте /done")
           @state.set_current_process(STATES[:sending_files])
+        when COMMANDS[:edit_name_group]
+          delete_message(bot, @state.current_message)
+          send_message(bot, message, "Введите новое имя группы", reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
+        when COMMANDS[:delete_group]
+          @storage.delete_group(@state.current_group)
+          keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
+          current_bot_message = edit_message(bot, @state.current_message, "Группа удалена!", reply_markup: keyboard)
+          @state.set_current_message(current_bot_message)
         end
       end
     end
@@ -78,6 +91,12 @@ class Client
       @state.set_current_group(@storage.get_group_id_by_name(group_name))
       send_message(bot, message, "Группа создана!")
       prepare_group_info(bot, message, group_name)
+    when "Введите новое имя группы"
+      group_name = message.text
+      @storage.edit_group_name(@state.current_group, group_name)
+      keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
+      current_bot_message = send_message(bot, message, "Имя успешно изменено!", reply_markup: keyboard)
+      @state.set_current_message(current_bot_message)
     end
   end
 
@@ -89,8 +108,8 @@ class Client
     else
       send_media_group(bot, message, create_input_media_document(file_ids))
     end
-    keyboard = create_inline_keyboard(["Добавить файлы"],
-                                      [COMMANDS[:add_files]],
+    keyboard = create_inline_keyboard(["Добавить файлы", "Изменить имя группы", "Удалить группу"],
+                                      [COMMANDS[:add_files], COMMANDS[:edit_name_group], COMMANDS[:delete_group]],
                                       back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
     current_bot_message = send_message(bot, message, "Список действий", reply_markup: keyboard)
     @state.set_current_message(current_bot_message)
@@ -102,7 +121,7 @@ class Client
 
   def create_inline_keyboard(button_texts = nil, callback_dates = nil, back_button: {})
     kb = []
-    unless button_texts.nil? && callback_dates.nil? && button_texts.size == callback_dates.size
+    unless button_texts.nil? && callback_dates.nil?
       button_texts.size.times do |i|
         button = create_inline_button(button_texts[i], callback_dates[i])
         kb.push(button)
@@ -134,7 +153,7 @@ class Client
 
     if message.text == COMMANDS[:done]
       keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
-      current_bot_message = edit_message(bot, @state.current_message, "Файлы сохранены.", reply_markup: keyboard)
+      current_bot_message = send_message(bot, message, "Файлы сохранены.", reply_markup: keyboard)
       @state.set_current_message(current_bot_message)
       @state.set_current_process(STATES[:normal])
     end
@@ -149,6 +168,10 @@ class Client
     return if message.nil?
 
     bot.api.edit_message_text(chat_id: message.chat.id, message_id: message.message_id, text: text, **options)
+  end
+
+  def delete_message(bot, message)
+    bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
   end
 
   def send_media_group(bot, message, media)

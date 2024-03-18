@@ -22,6 +22,15 @@ class Storage
     @db.query("SELECT id FROM groups WHERE name=?", name).to_a.flatten
   end
 
+  def edit_group_name(id, name)
+    @db.execute "UPDATE groups SET name=? where id=?", name, id
+  end
+
+  def delete_group(id)
+    @db.execute "DELETE from files where group_id=?", id
+    @db.execute "DELETE from groups where id=?", id
+  end
+
   def get_group_names
     @db.query("SELECT name FROM groups").to_a.flatten
   end
