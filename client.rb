@@ -8,7 +8,6 @@ class Client
     list_of_groups: '/list_of_groups',
     add_files: '/add_files',
     back: '/back',
-    stop: '/stop'
   }
 
   STATES = {
@@ -33,7 +32,7 @@ class Client
       when Telegram::Bot::Types::Message
         case message.text
         when COMMANDS[:start]
-          keyboard = create_inline_keyboard(1, ["Меню"], [COMMANDS[:menu]])
+          keyboard = create_inline_keyboard(["Меню"], [COMMANDS[:menu]])
           current_bot_message = send_message(bot, message, "Привет, я FolderBot", reply_markup: keyboard)
           @state.set_current_message(current_bot_message)
         else
@@ -43,7 +42,8 @@ class Client
       when Telegram::Bot::Types::CallbackQuery
         case message.data
         when COMMANDS[:menu]
-          keyboard = create_inline_keyboard(2, ["Создать группу", "Список групп"], [COMMANDS[:create_group], COMMANDS[:list_of_groups]])
+          keyboard = create_inline_keyboard(["Создать группу", "Список групп"],
+                                            [COMMANDS[:create_group], COMMANDS[:list_of_groups]])
           current_bot_message = edit_message(bot, @state.current_message, "Что хотите сделать", reply_markup: keyboard)
           @state.set_current_message(current_bot_message)
         when COMMANDS[:create_group]
@@ -51,7 +51,9 @@ class Client
         when COMMANDS[:list_of_groups]
           names = @storage.get_group_names
           callback_dates = names.map { |name| "/pick_#{name.gsub(' ', '_')}" }
-          keyboard = create_inline_keyboard(names.count + 1, names.push("Назад в меню"), callback_dates.push(COMMANDS[:menu]))
+          keyboard = create_inline_keyboard(names,
+                                            callback_dates,
+                                            back_button: { text: "« Назад в меню", callback_data: COMMANDS[:menu]})
           current_bot_message = edit_message(bot, @state.current_message, "Выберите группу", reply_markup: keyboard)
           @state.set_current_message(current_bot_message)
         when /^\/pick_\w+$/
@@ -87,7 +89,9 @@ class Client
     else
       send_media_group(bot, message, create_input_media_document(file_ids))
     end
-    keyboard = create_inline_keyboard(2, ["Добавить файлы", "Назад в список групп"], [COMMANDS[:add_files], COMMANDS[:list_of_groups]])
+    keyboard = create_inline_keyboard(["Добавить файлы"],
+                                      [COMMANDS[:add_files]],
+                                      back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
     current_bot_message = send_message(bot, message, "Список действий", reply_markup: keyboard)
     @state.set_current_message(current_bot_message)
   end
@@ -96,12 +100,21 @@ class Client
     file_ids.map { |file_id| Telegram::Bot::Types::InputMediaDocument.new(type: 'document', media: file_id) }
   end
 
-  def create_inline_keyboard(button_count, button_texts, callback_dates)
+  def create_inline_keyboard(button_texts = nil, callback_dates = nil, back_button: {})
     kb = []
-    button_count.times do |i|
-      kb.push(create_inline_button(button_texts[i], callback_dates[i]))
+    unless button_texts.nil? && callback_dates.nil? && button_texts.size == callback_dates.size
+      button_texts.size.times do |i|
+        button = create_inline_button(button_texts[i], callback_dates[i])
+        kb.push(button)
+      end
+      kb = kb.each_slice(2).to_a
     end
-    Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: [kb])
+
+    unless back_button.empty?
+      back_button = [create_inline_button(back_button[:text], back_button[:callback_data])]
+      kb.push(back_button)
+    end
+    Telegram::Bot::Types::InlineKeyboardMarkup.new(inline_keyboard: kb)
   end
 
   def create_inline_button(button_text, callback_date)
@@ -120,7 +133,7 @@ class Client
     end
 
     if message.text == COMMANDS[:done]
-      keyboard = create_inline_keyboard(1, ["Назад в список групп"], [COMMANDS[:list_of_groups]])
+      keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
       current_bot_message = edit_message(bot, @state.current_message, "Файлы сохранены.", reply_markup: keyboard)
       @state.set_current_message(current_bot_message)
       @state.set_current_process(STATES[:normal])
