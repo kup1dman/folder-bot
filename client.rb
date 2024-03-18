@@ -7,7 +7,8 @@ class Client
     create_group: '/create_group',
     list_of_groups: '/list_of_groups',
     add_files: '/add_files',
-    back: '/back'
+    back: '/back',
+    stop: '/stop'
   }
 
   STATES = {
@@ -17,8 +18,7 @@ class Client
 
   def initialize
     @storage = Storage.new
-    @state = STATES[:normal]
-    @current_group_id = nil #плохо
+    @state = State.new
   end
 
   def start
@@ -34,30 +34,33 @@ class Client
         case message.text
         when COMMANDS[:start]
           keyboard = create_inline_keyboard(1, ["Меню"], [COMMANDS[:menu]])
-          send_message(bot, message, "Привет, я FolderBot", reply_markup: keyboard)
+          current_bot_message = send_message(bot, message, "Привет, я FolderBot", reply_markup: keyboard)
+          @state.set_current_message(current_bot_message)
         else
           handle_replies(bot, message)
-          process_sending_files(bot, message) if STATES[:sending_files]
+          process_sending_files(bot, message) if @state.current_process == STATES[:sending_files]
         end
       when Telegram::Bot::Types::CallbackQuery
         case message.data
         when COMMANDS[:menu]
           keyboard = create_inline_keyboard(2, ["Создать группу", "Список групп"], [COMMANDS[:create_group], COMMANDS[:list_of_groups]])
-          send_message(bot, message, "Что хотите сделать", reply_markup: keyboard)
+          current_bot_message = edit_message(bot, @state.current_message, "Что хотите сделать", reply_markup: keyboard)
+          @state.set_current_message(current_bot_message)
         when COMMANDS[:create_group]
           send_message(bot, message, "Назовите группу", reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
         when COMMANDS[:list_of_groups]
           names = @storage.get_group_names
           callback_dates = names.map { |name| "/pick_#{name.gsub(' ', '_')}" }
           keyboard = create_inline_keyboard(names.count + 1, names.push("Назад в меню"), callback_dates.push(COMMANDS[:menu]))
-          send_message(bot, message, "Выберите группу", reply_markup: keyboard)
+          current_bot_message = edit_message(bot, @state.current_message, "Выберите группу", reply_markup: keyboard)
+          @state.set_current_message(current_bot_message)
         when /^\/pick_\w+$/
           group_name = message.data[6..].gsub('_', ' ') #плохо
-          @current_group_id = @storage.get_group_id_by_name(group_name)
+          @state.set_current_group(@storage.get_group_id_by_name(group_name))
           prepare_group_info(bot, message, group_name)
         when COMMANDS[:add_files]
           send_message(bot, message, "Отправляйте файлы. Закончили? Вызывайте /done")
-          @state = STATES[:sending_files]
+          @state.set_current_process(STATES[:sending_files])
         end
       end
     end
@@ -70,8 +73,8 @@ class Client
     when "Назовите группу"
       group_name = message.text
       @storage.write_to_groups_table(group_name)
+      @state.set_current_group(@storage.get_group_id_by_name(group_name))
       send_message(bot, message, "Группа создана!")
-      @current_group_id = @storage.get_group_id_by_name(group_name)
       prepare_group_info(bot, message, group_name)
     end
   end
@@ -85,7 +88,8 @@ class Client
       send_media_group(bot, message, create_input_media_document(file_ids))
     end
     keyboard = create_inline_keyboard(2, ["Добавить файлы", "Назад в список групп"], [COMMANDS[:add_files], COMMANDS[:list_of_groups]])
-    send_message(bot, message, "Список действий", reply_markup: keyboard)
+    current_bot_message = send_message(bot, message, "Список действий", reply_markup: keyboard)
+    @state.set_current_message(current_bot_message)
   end
 
   def create_input_media_document(file_ids)
@@ -108,23 +112,30 @@ class Client
     if message.document
       if message.document.is_a?(Array)
         message.document.each do |doc|
-          @storage.write_to_files_table(doc.file_id, @current_group_id)
+          @storage.write_to_files_table(doc.file_id, @state.current_group)
         end
       else
-        @storage.write_to_files_table(message.document.file_id, @current_group_id)
+        @storage.write_to_files_table(message.document.file_id, @state.current_group)
       end
     end
 
     if message.text == COMMANDS[:done]
       keyboard = create_inline_keyboard(1, ["Назад в список групп"], [COMMANDS[:list_of_groups]])
-      send_message(bot, message, "Файлы сохранены.", reply_markup: keyboard)
-      @state = STATES[:normal]
+      current_bot_message = edit_message(bot, @state.current_message, "Файлы сохранены.", reply_markup: keyboard)
+      @state.set_current_message(current_bot_message)
+      @state.set_current_process(STATES[:normal])
     end
   end
 
   def send_message(bot, message, text, options = {})
     # разобраться почему from.id работает и с колбэк и с мэсседж
     bot.api.send_message(chat_id: message.from.id, text: text, **options)
+  end
+
+  def edit_message(bot, message, text, options = {})
+    return if message.nil?
+
+    bot.api.edit_message_text(chat_id: message.chat.id, message_id: message.message_id, text: text, **options)
   end
 
   def send_media_group(bot, message, media)
