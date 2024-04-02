@@ -19,7 +19,6 @@ class Client
 
   def initialize
     @storage = Storage.new
-    # @state = State.new
     @redis = Redis.new
   end
 
