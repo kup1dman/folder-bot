@@ -19,7 +19,8 @@ class Client
 
   def initialize
     @storage = Storage.new
-    @state = State.new
+    # @state = State.new
+    @redis = Redis.new
   end
 
   def start
@@ -36,20 +37,26 @@ class Client
         when COMMANDS[:start]
           keyboard = create_inline_keyboard(["Меню"], [COMMANDS[:menu]])
           current_bot_message = send_message(bot, message, "Привет, я FolderBot", reply_markup: keyboard)
-          @state.set_current_message(current_bot_message)
+          save_current_message(current_bot_message)
         else
           handle_replies(bot, message)
-          process_sending_files(bot, message) if @state.current_process == STATES[:sending_files]
+          process_sending_files(bot, message) if @redis.get("current-process") == STATES[:sending_files].to_s
         end
       when Telegram::Bot::Types::CallbackQuery
         case message.data
         when COMMANDS[:menu]
           keyboard = create_inline_keyboard(["Создать группу", "Список групп"],
                                             [COMMANDS[:create_group], COMMANDS[:list_of_groups]])
-          current_bot_message = edit_message(bot, @state.current_message, "Что хотите сделать", reply_markup: keyboard)
-          @state.set_current_message(current_bot_message)
+          current_bot_message = edit_message(bot,
+                                             @redis.hget("current-message", "message-id"),
+                                             @redis.hget("current-message", "chat-id"),
+                                             "Что хотите сделать",
+                                             reply_markup: keyboard)
+          save_current_message(current_bot_message)
         when COMMANDS[:create_group]
-          delete_message(bot, @state.current_message)
+          delete_message(bot,
+                         @redis.hget("current-message", "message-id"),
+                         @redis.hget("current-message", "chat-id"))
           send_message(bot, message, "Назовите группу", reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
         when COMMANDS[:list_of_groups]
           names = @storage.get_group_names
@@ -57,25 +64,39 @@ class Client
           keyboard = create_inline_keyboard(names,
                                             callback_dates,
                                             back_button: { text: "« Назад в меню", callback_data: COMMANDS[:menu]})
-          current_bot_message = edit_message(bot, @state.current_message, "Выберите группу", reply_markup: keyboard)
-          @state.set_current_message(current_bot_message)
+          current_bot_message = edit_message(bot,
+                                             @redis.hget("current-message", "message-id"),
+                                             @redis.hget("current-message", "chat-id"),
+                                             "Выберите группу",
+                                             reply_markup: keyboard)
+          save_current_message(current_bot_message)
         when /^\/pick_\w+$/
-          delete_message(bot, @state.current_message)
+          delete_message(bot,
+                         @redis.hget("current-message", "message-id"),
+                         @redis.hget("current-message", "chat-id"))
           group_name = message.data[6..].gsub('_', ' ') #плохо
-          @state.set_current_group(@storage.get_group_id_by_name(group_name))
+          @redis.hset("current-group", "id", @storage.get_group_id_by_name(group_name))
           prepare_group_info(bot, message, group_name)
         when COMMANDS[:add_files]
-          delete_message(bot, @state.current_message)
+          delete_message(bot,
+                         @redis.hget("current-message", "message-id"),
+                         @redis.hget("current-message", "chat-id"))
           send_message(bot, message, "Отправляйте файлы. Закончили? Вызывайте /done")
-          @state.set_current_process(STATES[:sending_files])
+          @redis.set("current-process", STATES[:sending_files].to_s)
         when COMMANDS[:edit_name_group]
-          delete_message(bot, @state.current_message)
+          delete_message(bot,
+                         @redis.hget("current-message", "message-id"),
+                         @redis.hget("current-message", "chat-id"))
           send_message(bot, message, "Введите новое имя группы", reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
         when COMMANDS[:delete_group]
-          @storage.delete_group(@state.current_group)
+          @storage.delete_group(@redis.hget("current-group", "id"))
           keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
-          current_bot_message = edit_message(bot, @state.current_message, "Группа удалена!", reply_markup: keyboard)
-          @state.set_current_message(current_bot_message)
+          current_bot_message = edit_message(bot,
+                                             @redis.hget("current-message", "message-id"),
+                                             @redis.hget("current-message", "chat-id"),
+                                             "Группа удалена!",
+                                             reply_markup: keyboard)
+          save_current_message(current_bot_message)
         end
       end
     end
@@ -88,15 +109,16 @@ class Client
     when "Назовите группу"
       group_name = message.text
       @storage.write_to_groups_table(group_name)
-      @state.set_current_group(@storage.get_group_id_by_name(group_name))
+      @redis.hset("current-group", "id", @storage.get_group_id_by_name(group_name))
       send_message(bot, message, "Группа создана!")
       prepare_group_info(bot, message, group_name)
     when "Введите новое имя группы"
       group_name = message.text
-      @storage.edit_group_name(@state.current_group, group_name)
+      @storage.edit_group_name(@redis.hget("current-group", "id"), group_name)
+      @redis.hset("current_group", "id", @storage.get_group_id_by_name(group_name))
       keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
       current_bot_message = send_message(bot, message, "Имя успешно изменено!", reply_markup: keyboard)
-      @state.set_current_message(current_bot_message)
+      save_current_message(current_bot_message)
     end
   end
 
@@ -112,7 +134,7 @@ class Client
                                       [COMMANDS[:add_files], COMMANDS[:edit_name_group], COMMANDS[:delete_group]],
                                       back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
     current_bot_message = send_message(bot, message, "Список действий", reply_markup: keyboard)
-    @state.set_current_message(current_bot_message)
+    save_current_message(current_bot_message)
   end
 
   def create_input_media_document(file_ids)
@@ -144,18 +166,18 @@ class Client
     if message.document
       if message.document.is_a?(Array)
         message.document.each do |doc|
-          @storage.write_to_files_table(doc.file_id, @state.current_group)
+          @storage.write_to_files_table(doc.file_id, @redis.hget("current-group", "id"))
         end
       else
-        @storage.write_to_files_table(message.document.file_id, @state.current_group)
+        @storage.write_to_files_table(message.document.file_id, @redis.hget("current-group", "id"))
       end
     end
 
     if message.text == COMMANDS[:done]
       keyboard = create_inline_keyboard(back_button: { text: "« Назад в список групп", callback_data: COMMANDS[:list_of_groups]})
       current_bot_message = send_message(bot, message, "Файлы сохранены.", reply_markup: keyboard)
-      @state.set_current_message(current_bot_message)
-      @state.set_current_process(STATES[:normal])
+      save_current_message(current_bot_message)
+      @redis.set("current-process", STATES[:normal].to_s)
     end
   end
 
@@ -164,17 +186,20 @@ class Client
     bot.api.send_message(chat_id: message.from.id, text: text, **options)
   end
 
-  def edit_message(bot, message, text, options = {})
-    return if message.nil?
-
-    bot.api.edit_message_text(chat_id: message.chat.id, message_id: message.message_id, text: text, **options)
+  def edit_message(bot, message_id, chat_id, text, options = {})
+    bot.api.edit_message_text(chat_id: chat_id, message_id: message_id, text: text, **options)
   end
 
-  def delete_message(bot, message)
-    bot.api.delete_message(chat_id: message.chat.id, message_id: message.message_id)
+  def delete_message(bot, message_id, chat_id)
+    bot.api.delete_message(chat_id: chat_id, message_id: message_id)
   end
 
   def send_media_group(bot, message, media)
     bot.api.send_media_group(chat_id: message.from.id, media: media)
+  end
+
+  def save_current_message(current_message)
+    @redis.hset("current-message",
+                "message-id", current_message.message_id, "chat-id", current_message.chat.id)
   end
 end

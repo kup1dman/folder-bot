@@ -19,7 +19,7 @@ class Storage
   end
 
   def get_group_id_by_name(name)
-    @db.query("SELECT id FROM groups WHERE name=?", name).to_a.flatten
+    @db.query("SELECT id FROM groups WHERE name=?", name).to_a.flatten.join
   end
 
   def edit_group_name(id, name)
