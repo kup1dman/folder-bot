@@ -1,10 +1,10 @@
 class PickGroup < Command
   def call
     delete_message(@bot,
-                   REDIS.hget('current-message', 'message-id'),
-                   REDIS.hget('current-message', 'chat-id'))
+                   App::REDIS.hget('current-message', 'message-id'),
+                   App::REDIS.hget('current-message', 'chat-id'))
     group_name = @message.data[6..].gsub('_', ' ') # плохо
-    REDIS.hset('current-group', 'id', STORAGE.get_group_id_by_name(group_name))
+    App::REDIS.hset('current-group', 'id', App::STORAGE.get_group_id_by_name(group_name))
     group_info(@bot, @message, group_name)
   end
 
@@ -15,12 +15,12 @@ class PickGroup < Command
                                %w[/add_files /edit_group_name /delete_group],
                                back_button: { text: '« Назад в список групп', callback_data: '/list_of_groups'})
     current_bot_message = send_message(bot, message, 'Список действий', reply_markup: keyboard)
-    REDIS.hset('current-message',
+    App::REDIS.hset('current-message',
                'message-id', current_bot_message.message_id, 'chat-id', current_bot_message.chat.id)
   end
 
   def files(bot, message, group_name)
-    file_ids = STORAGE.get_file_ids_by(STORAGE.get_group_id_by_name(group_name))
+    file_ids = App::STORAGE.get_file_ids_by(App::STORAGE.get_group_id_by_name(group_name))
     if file_ids.empty?
       send_message(bot, message, 'Пока тут пусто')
     else

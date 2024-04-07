@@ -5,7 +5,7 @@ class CreateGroup < Command
                  'Назовите группу',
                  reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
     delete_message(@bot,
-                   REDIS.hget('current-message', 'message-id'),
-                   REDIS.hget('current-message', 'chat-id'))
+                   App::REDIS.hget('current-message', 'message-id'),
+                   App::REDIS.hget('current-message', 'chat-id'))
   end
 end

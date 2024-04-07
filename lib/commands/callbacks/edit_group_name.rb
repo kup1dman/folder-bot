@@ -1,8 +1,8 @@
 class EditGroupName < Command
   def call
     delete_message(@bot,
-                   REDIS.hget('current-message', 'message-id'),
-                   REDIS.hget('current-message', 'chat-id'))
+                   App::REDIS.hget('current-message', 'message-id'),
+                   App::REDIS.hget('current-message', 'chat-id'))
     send_message(@bot,
                  @message,
                  'Введите новое имя группы',

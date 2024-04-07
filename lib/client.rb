@@ -50,7 +50,7 @@ class Client
           handle_message(bot, message)
         elsif message.reply_to_message
           handle_reply(bot, message)
-        elsif message.document && REDIS.get('current-process') == STATES[:sending_files].to_s
+        elsif message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
           handle_files(bot, message)
         end
       when Telegram::Bot::Types::CallbackQuery
@@ -82,9 +82,9 @@ class Client
 
   def handle_files(bot, message)
     if message.document.is_a?(Array)
-      message.document.each { |doc| STORAGE.write_to_files_table(doc.file_id, REDIS.hget('current-group', 'id')) }
+      message.document.each { |doc| App::STORAGE.write_to_files_table(doc.file_id, App::REDIS.hget('current-group', 'id')) }
     else
-      STORAGE.write_to_files_table(message.document.file_id, REDIS.hget('current-group', 'id'))
+      App::STORAGE.write_to_files_table(message.document.file_id, App::REDIS.hget('current-group', 'id'))
     end
   end
 end
