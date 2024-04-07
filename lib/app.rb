@@ -3,6 +3,7 @@
 require 'redis'
 require_relative '../storage'
 require_relative '../lib/client'
+
 module App
   STORAGE = Storage.new
   REDIS = Redis.new
