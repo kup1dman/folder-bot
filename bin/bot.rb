@@ -7,9 +7,6 @@ require 'require_all'
 require 'redis'
 
 require_relative '../storage'
-require_all 'lib/helpers'
-require_relative '../lib/parser'
-require_relative '../lib/command'
 require_relative '../lib/client'
 
 STORAGE = Storage.new

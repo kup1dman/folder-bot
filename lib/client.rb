@@ -1,4 +1,8 @@
+require_all 'lib/helpers'
+require_relative '../lib/parser'
+require_relative '../lib/commands/command'
 require_all 'lib/commands'
+
 class Client
   include ApiHelper
 
