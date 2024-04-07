@@ -54,6 +54,7 @@ GEM
     redis-client (0.21.1)
       connection_pool
     regexp_parser (2.9.0)
+    require_all (3.0.0)
     rexml (3.2.6)
     rubocop (1.62.1)
       json (~> 2.3)
@@ -86,6 +87,7 @@ DEPENDENCIES
   dotenv (~> 3.0)
   pry (~> 0.14.2)
   redis (~> 5.1)
+  require_all (~> 3.0)
   rubocop (~> 1.62)
   sqlite3 (~> 1.7)
   telegram-bot-ruby (~> 2.0)

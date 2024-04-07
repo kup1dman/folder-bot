@@ -1,3 +1,4 @@
+require_all 'lib/commands'
 class Client
   include ApiHelper
 

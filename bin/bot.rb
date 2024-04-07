@@ -3,16 +3,14 @@
 require 'telegram/bot'
 require 'dotenv/load'
 require 'pry'
-
-require './storage'
+require 'require_all'
 require 'redis'
 
-Dir['./lib/helpers/*.rb'].sort.each { |file| require file }
-require './lib/commands/command'
-Dir['./lib/commands/callbacks/*.rb'].sort.each { |file| require file }
-Dir['./lib/commands/messages/*.rb'].sort.each { |file| require file }
-Dir['./lib/commands/replies/*.rb'].sort.each { |file| require file }
-Dir['./lib/*.rb'].sort.each { |file| require file }
+require_relative '../storage'
+require_all 'lib/helpers'
+require_relative '../lib/parser'
+require_relative '../lib/command'
+require_relative '../lib/client'
 
 STORAGE = Storage.new
 REDIS = Redis.new
