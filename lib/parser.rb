@@ -6,10 +6,8 @@ class Parser
 
   def command
     case @message_type
-    when :message
-      Client::MESSAGES.keys.find { |key| key == parsed_message&.to_sym }
-    when :callback
-      Client::CALLBACKS.keys.find { |key| key == parsed_message&.to_sym }
+    when :message, :callback
+      Object.const_get parsed_message.split('_').map(&:capitalize).join
     when :reply
       Object.const_get App::REDIS.get('context').split('_').map(&:capitalize).join
     end
@@ -25,8 +23,6 @@ class Parser
       @message.text[1..]
     when :callback
       @message.data.match?(%r{^/pick_\w+$}) ? 'pick_group' : @message.data[1..]
-    when :reply
-      @message.reply_to_message.text
     end
   end
 
@@ -36,8 +32,6 @@ class Parser
       !@message.text.empty? && @message.text.start_with?('/')
     when :callback
       !@message.data.empty? && @message.data.start_with?('/')
-    when :reply
-      !@message.reply_to_message.text.empty?
     end
   end
 end

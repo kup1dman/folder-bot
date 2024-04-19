@@ -7,21 +7,6 @@ require_all 'lib/commands'
 class Client
   include ApiHelper
 
-  MESSAGES = {
-    start: Start,
-    done: Done
-  }.freeze
-
-  CALLBACKS = {
-    menu: Menu,
-    create_group: CreateGroup,
-    list_of_groups: ListOfGroups,
-    pick_group: PickGroup,
-    edit_group_name: EditGroupName,
-    delete_group: DeleteGroup,
-    add_files: AddFiles
-  }.freeze
-
   STATES = {
     normal: 0,
     sending_files: 1
@@ -54,14 +39,14 @@ class Client
     parser = Parser.new(message, type: :message)
     return send_message(bot, message, 'Нет такой команды') unless parser.command
 
-    MESSAGES[parser.command].new(bot, message).call
+    parser.command.new(bot, message).call
   end
 
   def handle_callback(bot, message)
     parser = Parser.new(message, type: :callback)
     return send_message(bot, message, 'Нет такой команды') unless parser.command
 
-    CALLBACKS[parser.command].new(bot, message).call
+    parser.command.new(bot, message).call
   end
 
   def handle_reply(bot, message)
