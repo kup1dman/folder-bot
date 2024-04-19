@@ -3,6 +3,7 @@ class EditGroupName < Command
     delete_message(@bot,
                    App::REDIS.hget('current-message', 'message-id'),
                    App::REDIS.hget('current-message', 'chat-id'))
+    save_context :edit_group_name_reply
     send_message(@bot,
                  @message,
                  'Введите новое имя группы',

@@ -1,5 +1,6 @@
 require_all 'lib/helpers'
 require_relative '../lib/parser'
+require_relative '../lib/message_context'
 require_relative '../lib/commands/command'
 require_all 'lib/commands'
 
@@ -19,16 +20,6 @@ class Client
     edit_group_name: EditGroupName,
     delete_group: DeleteGroup,
     add_files: AddFiles
-  }.freeze
-
-  REPLIES = {
-    create_group_reply: CreateGroupReply,
-    edit_group_name_reply: EditGroupNameReply
-  }.freeze
-
-  REPLY_TEXTS = {
-    'Назовите группу': :create_group_reply,
-    'Введите новое имя группы': :edit_group_name_reply
   }.freeze
 
   STATES = {
@@ -77,7 +68,7 @@ class Client
     parser = Parser.new(message, type: :reply)
     return send_message(bot, message, 'Нет такой команды') unless parser.command
 
-    REPLIES[parser.command].new(bot, message).call
+    parser.command.new(bot, message).call
   end
 
   def handle_files(bot, message)

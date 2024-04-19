@@ -11,7 +11,7 @@ class Parser
     when :callback
       Client::CALLBACKS.keys.find { |key| key == parsed_message&.to_sym }
     when :reply
-      Client::REPLIES.keys.find { |key| key == Client::REPLY_TEXTS[parsed_message&.to_sym] }
+      Object.const_get App::REDIS.get('context').split('_').map(&:capitalize).join
     end
   end
 
