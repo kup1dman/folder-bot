@@ -22,35 +22,17 @@ class Client
     bot.listen do |message|
       case message
       when Telegram::Bot::Types::Message
-        if message.text && message.reply_to_message.nil?
-          handle_message(bot, message)
-        elsif message.reply_to_message
-          handle_reply(bot, message)
-        elsif message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
-          handle_files(bot, message)
-        end
+        handle_data(bot, message, type: :message) if message.text && message.reply_to_message.nil?
+        handle_data(bot, message, type: :reply) if message.reply_to_message
+        handle_files(bot, message) if message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
       when Telegram::Bot::Types::CallbackQuery
-        handle_callback(bot, message)
+        handle_data(bot, message, type: :callback)
       end
     end
   end
 
-  def handle_message(bot, message)
-    parser = Parser.new(message, type: :message)
-    return send_message(bot, message, 'Нет такой команды') unless parser.command
-
-    parser.command.new(bot, message).call
-  end
-
-  def handle_callback(bot, message)
-    parser = Parser.new(message, type: :callback)
-    return send_message(bot, message, 'Нет такой команды') unless parser.command
-
-    parser.command.new(bot, message).call
-  end
-
-  def handle_reply(bot, message)
-    parser = Parser.new(message, type: :reply)
+  def handle_data(bot, message, type:)
+    parser = Parser.new(message, type)
     return send_message(bot, message, 'Нет такой команды') unless parser.command
 
     parser.command.new(bot, message).call

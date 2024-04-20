@@ -1,5 +1,5 @@
 class Parser
-  def initialize(message, type: nil)
+  def initialize(message, type)
     @message = message
     @message_type = type
   end
@@ -32,6 +32,8 @@ class Parser
       !@message.text.empty? && @message.text.start_with?('/')
     when :callback
       !@message.data.empty? && @message.data.start_with?('/')
+    else
+      false
     end
   end
 end
