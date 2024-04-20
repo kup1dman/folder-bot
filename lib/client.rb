@@ -1,11 +1,13 @@
 require_all 'lib/helpers'
-require_relative '../lib/parser'
+require_relative '../lib/session'
 require_relative '../lib/message_context'
+require_relative '../lib/parser'
 require_relative '../lib/commands/command'
 require_all 'lib/commands'
 
 class Client
   include ApiHelper
+  include Session
 
   STATES = {
     normal: 0,

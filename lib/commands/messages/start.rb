@@ -1,8 +1,12 @@
 class Start < Command
   def call
+    build_session(from: @message.from, chat: @message.chat)
+
     keyboard = inline_keyboard(['Меню'], ['/menu'])
     current_bot_message = send_message(@bot, @message, 'Привет, я FolderBot', reply_markup: keyboard)
-    App::REDIS.hset('current-message',
-               'message-id', current_bot_message.message_id, 'chat-id', current_bot_message.chat.id)
+    save_message message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id
+
+    # App::REDIS.hset('current-message',
+    #            'message-id', current_bot_message.message_id, 'chat-id', current_bot_message.chat.id)
   end
 end

@@ -1,4 +1,5 @@
 class Parser
+  include MessageContext
   def initialize(message, type)
     @message = message
     @message_type = type
@@ -9,7 +10,7 @@ class Parser
     when :message, :callback
       Object.const_get parsed_message.split('_').map(&:capitalize).join
     when :reply
-      Object.const_get App::REDIS.get('context').split('_').map(&:capitalize).join
+      Object.const_get context.split('_').map(&:capitalize).join
     end
   end
 
