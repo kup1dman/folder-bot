@@ -1,6 +1,6 @@
 class EditGroupName < Command
   def call
-    delete_message(@bot, message[:message_id], message[:chat_id])
+    delete_message(@bot, message)
     save_context :edit_group_name_reply
     send_message(@bot,
                  @message,
