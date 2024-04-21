@@ -11,12 +11,10 @@ module Session
     end
   end
 
-  def read(key, value = nil)
-    if value
-      App::REDIS.hget("#{session_key}:#{key}", value)
-    else
+  def read(key)
+    App::REDIS.hgetall("#{session_key}:#{key}").transform_keys(&:to_sym)
+    rescue
       App::REDIS.get("#{session_key}:#{key}")
-    end
   end
 
   def session_key

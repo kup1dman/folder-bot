@@ -1,8 +1,8 @@
 class PickGroup < Command
   def call
-    delete_message(@bot, message('message_id'), message('chat_id'))
+    delete_message(@bot, message[:message_id], message[:chat_id])
     group_name = @message.data[6..].gsub('_', ' ') # плохо
-    save_group id: App::STORAGE.get_group_id_by_name(group_name)
+    save_group App::STORAGE.get_group_id_by_name(group_name)
     group_info(@bot, @message, group_name)
   end
 

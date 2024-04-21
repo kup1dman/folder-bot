@@ -12,11 +12,15 @@ module MessageContext
     write('message', message)
   end
 
-  def message(key)
-    read('message', key)
+  def message
+    read('message')
   end
 
   def save_group(group)
     write('group', group)
+  end
+
+  def group
+    read('group')
   end
 end
