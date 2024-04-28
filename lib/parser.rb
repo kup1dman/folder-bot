@@ -1,6 +1,4 @@
 module Parser
-  include MessageContext
-
   AVAILABLE_TEXT_COMMANDS = %w[/start /done].freeze
 
   def command(data, type)

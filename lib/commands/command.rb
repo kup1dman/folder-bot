@@ -1,8 +1,8 @@
 class Command
+  include Session
   include InlineHelper
   include ApiHelper
   include MediaHelper
-  include MessageContext
 
   def initialize(bot, message)
     @bot = bot

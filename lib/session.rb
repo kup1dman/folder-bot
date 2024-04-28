@@ -5,7 +5,7 @@ module Session
     App::REDIS.set('session_key', "FolderBot:#{from.id}:#{chat.id}")
   end
 
-  def write(key, value)
+  def save(key, value)
     if value.is_a?(Hash)
       App::REDIS.hset("#{session_key}:#{key}", value.to_a.flatten)
     else
