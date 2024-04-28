@@ -9,11 +9,6 @@ class Client
   include Session
   include Parser
 
-  STATES = {
-    normal: 0,
-    sending_files: 1
-  }.freeze
-
   def start
     Telegram::Bot::Client.run(ENV['TOKEN']) { |bot| listen_to_messages(bot) }
   end
@@ -25,9 +20,7 @@ class Client
       case message
       when Telegram::Bot::Types::Message
         handle_data(bot, message, data: message.text) if message.text && message.reply_to_message.nil?
-        handle_data(bot, message, data: read(:current_context)) if message.reply_to_message
-        # handle_data(bot, message, data: message.document)
-        # handle_files(bot, message) if message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
+        handle_data(bot, message, data: read(:current_context)) if message.reply_to_message || message.document
       when Telegram::Bot::Types::CallbackQuery
         handle_data(bot, message, data: message.data)
       end
@@ -36,13 +29,5 @@ class Client
 
   def handle_data(bot, message, data:)
     command(data)&.new(bot, message)&.call || send_message(bot, message, 'Нет такой команды')
-  end
-
-  def handle_files(bot, message)
-    if message.document.is_a?(Array)
-      message.document.each { |doc| App::STORAGE.write_to_files_table(doc.file_id, App::REDIS.hget('current-group', 'id')) }
-    else
-      App::STORAGE.write_to_files_table(message.document.file_id, App::REDIS.hget('current-group', 'id'))
-    end
   end
 end
