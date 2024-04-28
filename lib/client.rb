@@ -26,7 +26,7 @@ class Client
     bot.listen do |message|
       case message
       when Telegram::Bot::Types::Message
-        handle_data(bot, message, data: message.text) if message.text && message.reply_to_message.nil?
+        handle_data(bot, message, data: message.text, type: :message) if message.text && message.reply_to_message.nil?
         handle_data(bot, message, data: context) if message.reply_to_message
         # handle_files(bot, message) if message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
       when Telegram::Bot::Types::CallbackQuery
@@ -35,8 +35,8 @@ class Client
     end
   end
 
-  def handle_data(bot, message, data:)
-    command(data)&.new(bot, message)&.call || send_message(bot, message, 'Нет такой команды')
+  def handle_data(bot, message, data:, type: nil)
+    command(data, type)&.new(bot, message)&.call || send_message(bot, message, 'Нет такой команды')
   end
 
   def handle_files(bot, message)
