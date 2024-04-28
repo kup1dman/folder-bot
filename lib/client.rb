@@ -8,6 +8,8 @@ require_all 'lib/commands'
 class Client
   include ApiHelper
   include Session
+  include MessageContext
+  include Parser
 
   STATES = {
     normal: 0,
@@ -24,20 +26,17 @@ class Client
     bot.listen do |message|
       case message
       when Telegram::Bot::Types::Message
-        handle_data(bot, message, type: :message) if message.text && message.reply_to_message.nil?
-        handle_data(bot, message, type: :reply) if message.reply_to_message
-        handle_files(bot, message) if message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
+        handle_data(bot, message, data: message.text) if message.text && message.reply_to_message.nil?
+        handle_data(bot, message, data: context) if message.reply_to_message
+        # handle_files(bot, message) if message.document && App::REDIS.get('current-process') == STATES[:sending_files].to_s
       when Telegram::Bot::Types::CallbackQuery
-        handle_data(bot, message, type: :callback)
+        handle_data(bot, message, data: message.data)
       end
     end
   end
 
-  def handle_data(bot, message, type:)
-    parser = Parser.new(message, type)
-    return send_message(bot, message, 'Нет такой команды') unless parser.command
-
-    parser.command.new(bot, message).call
+  def handle_data(bot, message, data:)
+    command(data)&.new(bot, message)&.call || send_message(bot, message, 'Нет такой команды')
   end
 
   def handle_files(bot, message)

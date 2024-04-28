@@ -1,40 +1,18 @@
-class Parser
+module Parser
   include MessageContext
-  def initialize(message, type)
-    @message = message
-    @message_type = type
-  end
 
-  def command
-    case @message_type
-    when :message, :callback
-      Object.const_get parsed_message.split('_').map(&:capitalize).join
-    when :reply
-      Object.const_get context.split('_').map(&:capitalize).join
-    end
+  def command(data)
+    Object.const_get parsed_message(data).split('_').map(&:capitalize).join
+  rescue
+    nil
   end
 
   private
 
-  def parsed_message
-    return nil unless can_parse?
+  def parsed_message(data)
+    return nil unless data.start_with?('/')
+    return 'pick_group' if data.match?(%r{^/pick_\w+$})
 
-    case @message_type
-    when :message
-      @message.text[1..]
-    when :callback
-      @message.data.match?(%r{^/pick_\w+$}) ? 'pick_group' : @message.data[1..]
-    end
-  end
-
-  def can_parse?
-    case @message_type
-    when :message
-      !@message.text.empty? && @message.text.start_with?('/')
-    when :callback
-      !@message.data.empty? && @message.data.start_with?('/')
-    else
-      false
-    end
+    data.sub('/', '')
   end
 end

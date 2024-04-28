@@ -1,5 +1,7 @@
 module Session
   def build_session(from:, chat:)
+    return if App::REDIS.get('session_key') == "FolderBot:#{from.id}:#{chat.id}"
+
     App::REDIS.set('session_key', "FolderBot:#{from.id}:#{chat.id}")
   end
 
