@@ -1,8 +1,13 @@
 module Session
-  def build_session(from:, chat:)
-    return if App::REDIS.get('session_key') == "FolderBot:#{from.id}:#{chat.id}"
+  def build_or_update_session(from:, chat:)
+    session_value = "FolderBot:#{from.id}:#{chat.id}"
+    return if App::REDIS.get('session_key') == session_value
 
-    App::REDIS.set('session_key', "FolderBot:#{from.id}:#{chat.id}")
+    App::REDIS.set('session_key', session_value)
+  end
+
+  def session_key
+    App::REDIS.get('session_key')
   end
 
   def save(key, value)
@@ -17,9 +22,5 @@ module Session
     App::REDIS.hgetall("#{session_key}:#{key}").transform_keys(&:to_sym)
     rescue
       App::REDIS.get("#{session_key}:#{key}")
-  end
-
-  def session_key
-    App::REDIS.get('session_key')
   end
 end
