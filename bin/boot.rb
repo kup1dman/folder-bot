@@ -5,6 +5,6 @@ require 'dotenv/load'
 require 'pry'
 require 'require_all'
 
-require_relative '../lib/app'
+require_relative '../lib/folder_bot'
 
-App.start
+FolderBot.start
