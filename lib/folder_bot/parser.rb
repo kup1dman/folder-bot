@@ -1,22 +1,22 @@
 module FolderBot
   module Parser
+    AVAILABLE_TEXT_COMMANDS = %w[/start /done].freeze
+
     def command(data, type)
-      Object.const_get prefix(type) + parsed_message(data)
+      Object.const_get parsed_message(data, type)
     rescue
       nil
     end
 
     private
 
-    def parsed_message(data)
+    def parsed_message(data, type)
       return nil unless data.start_with?('/')
-      return 'PickGroup' if data.match?(%r{^/pick_\w+$})
+      return nil if type == :messages && !AVAILABLE_TEXT_COMMANDS.include?(data)
 
-      data.sub('/', '').split('_').map(&:capitalize).join
-    end
+      data = '/pick_group' if data.match?(%r{^/pick_\w+$})
 
-    def prefix(type)
-      "FolderBot::Commands::#{type.to_s.capitalize}::"
+      "FolderBot::Commands::#{type.to_s.capitalize}::" + data.sub('/', '').split('_').map(&:capitalize).join
     end
   end
 end
