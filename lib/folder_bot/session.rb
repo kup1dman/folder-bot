@@ -24,5 +24,9 @@ module FolderBot
     rescue
       FolderBot::REDIS.get("#{session_key}:#{key}")
     end
+
+    def clear(key)
+      FolderBot::REDIS.set("#{session_key}:#{key}", '')
+    end
   end
 end
