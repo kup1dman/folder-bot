@@ -11,7 +11,10 @@ module FolderBot
     include Parser
 
     def start
-      Telegram::Bot::Client.run(ENV['TOKEN']) { |bot| listen_to_messages(bot) }
+      Telegram::Bot::Client.run(ENV['TOKEN']) do |bot|
+        Signal.trap('INT') { bot.stop }
+        listen_to_messages(bot)
+      end
     end
 
     private
