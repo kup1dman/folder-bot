@@ -1,9 +1,3 @@
-require_all 'lib/folder_bot/helpers'
-require_relative 'session'
-require_relative 'parser'
-require_relative 'commands/command'
-require_all 'lib/folder_bot/commands'
-
 module FolderBot
   class Client
     include Helpers::ApiHelper

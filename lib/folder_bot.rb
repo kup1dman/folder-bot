@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-require 'redis'
 require_relative '../storage'
-require_relative '../lib/folder_bot/client'
+
+loader = Zeitwerk::Loader.for_gem
+loader.setup
 
 module FolderBot
   STORAGE = Storage.new

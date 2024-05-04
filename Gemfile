@@ -9,6 +9,6 @@ end
 
 gem 'dotenv', '~> 3.0'
 gem 'redis', '~> 5.1'
-gem 'require_all', '~> 3.0'
 gem 'sqlite3', '~> 1.7'
 gem 'telegram-bot-ruby', '~> 2.0'
+gem 'zeitwerk', '~> 2.6'
