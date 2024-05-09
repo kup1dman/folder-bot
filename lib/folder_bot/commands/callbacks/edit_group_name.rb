@@ -3,8 +3,8 @@ module FolderBot
     module Callbacks
       class EditGroupName < Command
         def call
-          delete_message(@bot, read(:current_message))
-          save :current_context, '/edit_group_name_reply'
+          delete_message(@bot, @session[:current_message])
+          @session[:current_context] = '/edit_group_name_reply'
           send_message(@bot,
                        @message,
                        'Введите новое имя группы',

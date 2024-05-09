@@ -7,8 +7,8 @@ module FolderBot
                        @message,
                        'Назовите группу',
                        reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
-          save :current_context, '/create_group_reply'
-          delete_message(@bot, read(:current_message))
+          @session[:current_context] = '/create_group_reply'
+          delete_message(@bot, @session[:current_message])
         end
       end
     end

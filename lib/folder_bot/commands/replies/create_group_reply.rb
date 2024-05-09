@@ -6,9 +6,9 @@ module FolderBot
           group_name = @message.text
           FolderBot::STORAGE.write_to_groups_table(group_name)
           send_message(@bot, @message, 'Группа создана!')
-          Callbacks::PickGroup.new(@bot, @message).group_info(@bot, @message, group_name) # плохо
-          clear :current_group
-          clear :current_context
+          Callbacks::PickGroup.new(@bot, @message, @session).group_info(@bot, @message, group_name) # плохо
+          @session.clear :current_group
+          @session.clear :current_context
         end
       end
     end

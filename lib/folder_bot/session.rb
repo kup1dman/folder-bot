@@ -1,32 +1,37 @@
 module FolderBot
-  module Session
-    def build_or_update_session(from:, chat:)
-      session_value = "FolderBot:#{from.id}:#{chat.id}"
-      return if FolderBot::REDIS.get('session_key') == session_value
-
-      FolderBot::REDIS.set('session_key', session_value)
+  class Session
+    def initialize(store:)
+      @store = store
+      @user_id = nil
     end
 
-    def session_key
-      FolderBot::REDIS.get('session_key')
+    def build_session(user_id:)
+      @store.set("FolderBot:#{user_id}", user_id.to_s) unless @store.exists?("FolderBot:#{user_id}")
+      @user_id = user_id
     end
 
-    def save(key, value)
+    def []=(key, value)
       if value.is_a?(Hash)
-        FolderBot::REDIS.hset("#{session_key}:#{key}", value.to_a.flatten)
+        @store.hset("#{session_id}:#{key}", value.to_a.flatten)
       else
-        FolderBot::REDIS.set("#{session_key}:#{key}", value)
+        @store.set("#{session_id}:#{key}", value)
       end
     end
 
-    def read(key)
-      FolderBot::REDIS.hgetall("#{session_key}:#{key}").transform_keys(&:to_sym)
+    def [](key)
+      @store.hgetall("#{session_id}:#{key}").transform_keys(&:to_sym)
     rescue
-      FolderBot::REDIS.get("#{session_key}:#{key}")
+      @store.get("#{session_id}:#{key}")
     end
 
     def clear(key)
-      FolderBot::REDIS.set("#{session_key}:#{key}", '')
+      @store.set("#{session_id}:#{key}", '')
+    end
+
+    private
+
+    def session_id
+      @store.get("FolderBot:#{@user_id}")
     end
   end
 end
