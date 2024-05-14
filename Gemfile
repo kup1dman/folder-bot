@@ -8,6 +8,7 @@ group :development do
 end
 
 gem 'dotenv', '~> 3.0'
+gem 'rake', '~> 13.2'
 gem 'redis', '~> 5.1'
 gem 'sqlite3', '~> 1.7'
 gem 'telegram-bot-ruby', '~> 2.0'

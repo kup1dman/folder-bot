@@ -4,7 +4,7 @@ module FolderBot
     include Parser
 
     def initialize
-      @session = Session.new(store: FolderBot::REDIS)
+      @session = Session.new
     end
 
     def start

@@ -1,14 +1,16 @@
 # frozen_string_literal: true
 
-require_relative '../storage'
+require 'telegram/bot'
+require 'dotenv/load'
+require 'pry'
+require 'zeitwerk'
+require 'redis'
+require 'sqlite3'
 
 loader = Zeitwerk::Loader.for_gem
 loader.setup
 
 module FolderBot
-  STORAGE = Storage.new
-  REDIS = Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/1'))
-
   def self.start
     Client.new.start
   end
