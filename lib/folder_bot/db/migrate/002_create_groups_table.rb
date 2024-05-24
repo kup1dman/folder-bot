@@ -1,10 +1,8 @@
-class CreateGroupsTable < Migration
+class CreateGroupsTable < FolderBot::MiniRecord::Dsl::SchemaStatements
   def change
-    @adapter.execute <<-SQL
-      CREATE TABLE IF NOT EXISTS groups(
-        id INTEGER PRIMARY KEY NOT NULL,
-        name VARCHAR(64) NOT NULL
-      )
-    SQL
+    create_table :groups do |t|
+      t.column :name, :string, null: false, unique: true
+      t.references :user_id, :users
+    end
   end
 end

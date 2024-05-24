@@ -1,12 +1,16 @@
+require 'sqlite3'
+
 namespace :db do
   task :migrate do
-    require_relative 'lib/folder_bot/db/migration'
-    migration_files = Dir.glob('lib/folder_bot/db/migrate/*.rb').sort
-    migration_files.each do |file|
+    Dir.glob('lib/folder_bot/db/dsl/*.rb').sort.each do |file|
       require_relative file
     end
 
-    Migration.subclasses.each { |subclass| subclass.new.change }
+    Dir.glob('lib/folder_bot/db/migrate/*.rb').sort.each do |file|
+      require_relative file
+    end
+
+    FolderBot::MiniRecord::Dsl::SchemaStatements.subclasses.each { |subclass| subclass.new.change }
 
     puts 'Migrations successfully applied.'
   end
