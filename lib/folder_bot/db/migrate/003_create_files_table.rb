@@ -1,4 +1,4 @@
-class CreateFilesTable < FolderBot::MiniRecord::Dsl::SchemaStatements
+class CreateFilesTable < FolderBot::Db::Dsl::SchemaStatements
   def change
     create_table :files do |t|
       t.column :file_id, :integer, null: false

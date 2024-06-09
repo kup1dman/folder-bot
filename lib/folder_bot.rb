@@ -11,6 +11,7 @@ loader = Zeitwerk::Loader.for_gem
 loader.setup
 
 module FolderBot
+  ADAPTER = SQLite3::Database.new 'bot.db'
   def self.start
     Client.new.start
   end
