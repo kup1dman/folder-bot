@@ -1,5 +1,5 @@
 module FolderBot
-  module MiniRecord
+  module Db
     module Dsl
       class SchemaStatements
         def create_table(name)

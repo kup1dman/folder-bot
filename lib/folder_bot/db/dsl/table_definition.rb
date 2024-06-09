@@ -1,7 +1,7 @@
 module FolderBot
-  module MiniRecord
+  module Db
     module Dsl
-      class TableDefinition < Base
+      class TableDefinition
         TYPES = {
           integer: 'INTEGER',
           string: 'VARCHAR(64)'
@@ -18,10 +18,11 @@ module FolderBot
           @table_name = table_name
           @columns = []
           @foreign_keys = []
+          column(:id, TYPES[:integer], primary_key: true, null: false)
         end
 
         def column(name, type, **options)
-          sql_column = "#{name} #{TYPES[type]} #{sql_options(options)}"
+          sql_column = "#{name} #{type} #{sql_options(options)}"
           @columns << sql_column
         end
 
@@ -32,11 +33,10 @@ module FolderBot
         end
 
         def create_table
-          column(:id, TYPES[:integer], primary_key: true, null: false)
           sql_table = "CREATE TABLE IF NOT EXISTS #{@table_name} (
           #{@columns.concat(@foreign_keys).join(', ')}
         )"
-          @adapter.execute sql_table
+          FolderBot::ADAPTER.execute sql_table
         end
 
         def sql_options(options)
