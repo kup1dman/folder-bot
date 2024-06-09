@@ -6,6 +6,7 @@ module FolderBot
           delete_message(@bot, @session[:current_message])
           group_name = @message.data[6..].gsub('_', ' ') # плохо
           @session[:current_group] = FolderBot::STORAGE.get_group_id_by_name(group_name)
+          # @session[:current_group] = Group.find_by(:name, group_name)
           group_info(@bot, @message, group_name)
         end
 
@@ -20,7 +21,9 @@ module FolderBot
         end
 
         def files(bot, message, group_name)
+          # здесь нахуй не нужен group_name потому что есть :current_group
           file_ids = FolderBot::STORAGE.get_file_ids_by(FolderBot::STORAGE.get_group_id_by_name(group_name))
+          # file_ids = @session[:current_group].files.map(&:id)
           if file_ids.empty?
             send_message(bot, message, 'Пока тут пусто')
           else
