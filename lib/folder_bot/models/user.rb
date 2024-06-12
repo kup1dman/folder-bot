@@ -1,14 +1,15 @@
 module FolderBot
   module Models
     class User
-      attr_accessor :id
+      attr_accessor :id, :tg_uid
 
-      def initialize(id: nil)
+      def initialize(id: nil, tg_uid: nil)
         @id = id
+        @tg_uid = tg_uid
       end
 
       def save
-        FolderBot::ADAPTER.execute 'INSERT INTO users (id) VALUES (NULL)' # no attr in table
+        FolderBot::ADAPTER.execute 'INSERT INTO users (tg_uid) VALUES (?)', tg_uid
         self.id = FolderBot::ADAPTER.execute('SELECT last_insert_rowid() FROM users')[0][0]
 
         self
@@ -16,8 +17,8 @@ module FolderBot
         false
       end
 
-      def self.create
-        User.new.save
+      def self.create(tg_uid: nil)
+        User.new(tg_uid: tg_uid).save
       end
 
       def self.find(id)
@@ -25,7 +26,12 @@ module FolderBot
         new(id: data[0]) unless data.empty?
       end
 
-      # no update method because of no attr in table
+      def self.find_by(key, value)
+        data = FolderBot::ADAPTER.query("SELECT * FROM users WHERE #{key}=? LIMIT 1", value).to_a.flatten
+        new(id: data[0], tg_uid: data[1]) unless data.empty?
+      end
+
+      # no update method because of no such attr in table
 
       def delete
         FolderBot::ADAPTER.execute('DELETE FROM users  WHERE id=?', id)

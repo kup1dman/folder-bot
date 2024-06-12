@@ -1,13 +1,15 @@
 module FolderBot
   class Session
+    attr_reader :current_user
+
     def initialize
       @redis = Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/1'))
-      @user_id = nil
+      @current_user = nil
     end
 
-    def build_session(user_id:)
-      @redis.set("FolderBot:#{user_id}", user_id.to_s) unless @redis.exists?("FolderBot:#{user_id}")
-      @user_id = user_id
+    def build_session(tg_uid:)
+      user = Models::User.find_by(tg_uid, tg_uid)
+      @current_user = user || Models::User.create(tg_uid: tg_uid)
     end
 
     def []=(key, value)
@@ -31,7 +33,7 @@ module FolderBot
     private
 
     def session_id
-      @redis.get("FolderBot:#{@user_id}")
+      "FolderBot:#{@current_user.tg_uid}"
     end
   end
 end

@@ -18,7 +18,7 @@ module FolderBot
 
     def listen_to_messages(bot)
       bot.listen do |message|
-        @session.build_session(user_id: message.from.id)
+        @session.build_session(tg_uid: message.from.id)
 
         case message
         when Telegram::Bot::Types::Message
