@@ -31,8 +31,6 @@ module FolderBot
         new(id: data[0], tg_uid: data[1]) unless data.empty?
       end
 
-      # no update method because of no such attr in table
-
       def delete
         FolderBot::ADAPTER.execute('DELETE FROM users  WHERE id=?', id)
 

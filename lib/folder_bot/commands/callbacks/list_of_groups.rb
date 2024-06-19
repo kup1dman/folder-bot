@@ -3,8 +3,7 @@ module FolderBot
     module Callbacks
       class ListOfGroups < Command
         def call
-          names = FolderBot::STORAGE.group_names
-          # names = @session[:current_user].groups.map { |group| group.name }
+          names = @session.current_user.groups.map(&:name)
           callback_dates = names.map { |name| "/pick_#{name.gsub(' ', '_')}" }
           keyboard = inline_keyboard(names, callback_dates, back_button: { text: '« Назад в меню', callback_data: '/menu' })
           current_bot_message = edit_message(@bot, @session[:current_message], 'Выберите группу', reply_markup: keyboard)

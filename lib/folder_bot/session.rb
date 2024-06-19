@@ -8,8 +8,9 @@ module FolderBot
     end
 
     def build_session(tg_uid:)
-      user = Models::User.find_by(tg_uid, tg_uid)
-      @current_user = user || Models::User.create(tg_uid: tg_uid)
+      return if @current_user&.tg_uid == tg_uid
+
+      @current_user = Models::User.find_by(:tg_uid, tg_uid) || Models::User.create(tg_uid: tg_uid)
     end
 
     def []=(key, value)

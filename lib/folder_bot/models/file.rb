@@ -35,10 +35,13 @@ module FolderBot
       end
 
       def update(**options)
-        sql_options = options.map { |key, value| "#{key} = #{value}" }.join(', ')
+        sql_keys = options.map { |key, _| "#{key} = ?" }.join(', ')
+        sql_values = options.values
         begin
-          FolderBot::ADAPTER.execute("UPDATE files SET #{sql_options} where id=?", id)
-          self.file_id, self.group_id, self.user_id = options.values_at(:file_id, :group_id, :user_id)
+          FolderBot::ADAPTER.execute("UPDATE files SET #{sql_keys} where id=?", sql_values, id)
+          options.each do |key, value|
+            send("#{key}=", value) if respond_to?("#{key}=") && !value.nil?
+          end
 
           self
         rescue SQLite3::SQLException
