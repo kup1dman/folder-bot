@@ -8,8 +8,9 @@ module FolderBot
           end
 
           keyboard = inline_keyboard(['Меню'], ['/menu'])
-          current_bot_message = send_message(@bot, @message, 'Привет, я FolderBot', reply_markup: keyboard)
-          @session[:current_message] = { message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id }
+          send_message(@bot, @message, 'Привет, я FolderBot', reply_markup: keyboard)
+
+          # @session[:current_message] = { message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id }
         end
       end
     end

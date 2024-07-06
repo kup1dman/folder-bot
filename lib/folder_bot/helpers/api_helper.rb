@@ -12,6 +12,10 @@ module FolderBot
       def delete_message(bot, message)
         bot.api.delete_message(chat_id: message[:chat_id], message_id: message[:message_id])
       end
+
+      def delete_messages(bot, chat_id, messages)
+        bot.api.delete_messages(chat_id: chat_id, message_ids: messages)
+      end
     end
   end
 end
