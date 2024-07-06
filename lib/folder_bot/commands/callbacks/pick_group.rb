@@ -4,7 +4,7 @@ module FolderBot
       class PickGroup < Command
         def call
           delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id })
-          group_name = @message.data[6..].gsub('_', ' ') # плохо
+          group_name = @message.scan(/group_name=([^&]+)/).flatten[0]
 
           send_message(@bot, @message, "Группа #{group_name}")
           group = Models::Group.find_by(:name, group_name)
