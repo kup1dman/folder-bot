@@ -6,7 +6,7 @@ namespace :db do
       require_relative file
     end
 
-    FolderBot::Db::Dsl::SchemaStatements.subclasses.each { |subclass| subclass.new.change }
+    FolderBot::Db::Dsl::SchemaStatements.subclasses.reverse.each { |subclass| subclass.new.change }
 
     puts 'Migrations successfully applied.'
   end

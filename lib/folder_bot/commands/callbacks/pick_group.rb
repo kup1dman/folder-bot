@@ -3,7 +3,7 @@ module FolderBot
     module Callbacks
       class PickGroup < Command
         def call
-          delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id })
+          delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id }) if @message
           group_name = @message.data.scan(/group_name=([^&]+)/).flatten[0]
 
           send_message(@bot, @message, "Группа #{group_name}")

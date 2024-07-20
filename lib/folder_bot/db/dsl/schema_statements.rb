@@ -3,7 +3,7 @@ module FolderBot
     module Dsl
       class SchemaStatements
         def create_table(name)
-          td = TableDefinition.new(name)
+          td = SchemaDefinition.new(name)
           yield td if block_given?
           td.create_table
         end

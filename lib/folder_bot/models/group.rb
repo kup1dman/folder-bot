@@ -10,12 +10,16 @@ module FolderBot
       end
 
       def save
-        FolderBot::ADAPTER.execute 'INSERT INTO groups (name, user_id) VALUES (?, ?)', name, user_id
+        validated_name = name if name.length <= 20
+        FolderBot::ADAPTER.execute 'INSERT INTO groups (name, user_id) VALUES (?, ?)', validated_name, user_id
         self.id = FolderBot::ADAPTER.execute('SELECT last_insert_rowid() FROM groups')[0][0]
 
         self
-      rescue SQLite3::ConstraintException
-        false
+      rescue SQLite3::ConstraintException => e
+        errors = []
+        errors << 'Такое имя уже есть' if e.message.match?('UNIQUE')
+        errors << 'Имя слишком длинное' if e.message.match?('NOT NULL') #кривой отлов
+        errors
       end
 
       def self.create(name: nil, user_id: nil)

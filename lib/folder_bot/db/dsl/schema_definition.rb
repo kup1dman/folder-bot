@@ -1,33 +1,32 @@
 module FolderBot
   module Db
     module Dsl
-      class TableDefinition
+      class SchemaDefinition
         TYPES = {
           integer: 'INTEGER',
-          string: 'VARCHAR(64)'
+          string: 'VARCHAR(64)',
         }.freeze
 
         OPTIONS = {
           { primary_key: true } => 'PRIMARY KEY',
           { null: false } => 'NOT NULL',
-          { unique: true } => 'UNIQUE'
+          { unique: true } => 'UNIQUE',
         }.freeze
 
         def initialize(table_name)
-          super()
           @table_name = table_name
           @columns = []
           @foreign_keys = []
-          column(:id, TYPES[:integer], primary_key: true, null: false)
+          column(:id, :integer, primary_key: true, null: false)
         end
 
         def column(name, type, **options)
-          sql_column = "#{name} #{type} #{sql_options(options)}"
+          sql_column = "#{name} #{TYPES[type]} #{sql_options(options)}"
           @columns << sql_column
         end
 
         def references(column_name, ref_table)
-          column(column_name, TYPES[:integer])
+          column(column_name, :integer)
           sql_ref = "FOREIGN KEY (#{column_name}) REFERENCES #{ref_table}(id)"
           @foreign_keys << sql_ref
         end
