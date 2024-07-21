@@ -31,7 +31,9 @@ module FolderBot
     end
 
     def handle_data(bot, message, data:, type:)
-      command(data, type)&.new(bot, message, @session)&.call || send_message(bot, message, 'Нет такой команды')
+      result = command(data, type)&.new(bot, message, @session)&.call 
+      return if result == 400
+      return send_message(bot, message, 'Нет такой команды') if result.nil?
     end
   end
 end

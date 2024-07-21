@@ -13,6 +13,8 @@ module FolderBot
                        @message,
                        'Введите новое имя группы',
                        reply_markup: Telegram::Bot::Types::ForceReply.new(force_reply: true))
+        rescue Telegram::Bot::Exceptions::ResponseError => e
+          e.error_code
         end
       end
     end

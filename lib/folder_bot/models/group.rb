@@ -46,8 +46,11 @@ module FolderBot
           end
 
           self
-        rescue SQLite3::SQLException
-          false
+        rescue SQLite3::ConstraintException => e
+          errors = []
+          errors << 'Такое имя уже есть' if e.message.match?('UNIQUE')
+          errors << 'Имя слишком длинное' if e.message.match?('NOT NULL') #кривой отлов
+          errors
         end
       end
 

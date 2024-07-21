@@ -3,7 +3,7 @@ module FolderBot
     module Callbacks
       class PickGroup < Command
         def call
-          delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id }) if @message
+          delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id })
           group_name = @message.data.scan(/group_name=([^&]+)/).flatten[0]
 
           send_message(@bot, @message, "Группа #{group_name}")
@@ -23,9 +23,8 @@ module FolderBot
                                      ],
                                      back_button: { text: '« Назад в список групп', callback_data: '/list_of_groups' })
           send_message(@bot, @message, 'Список действий', reply_markup: keyboard)
-          # @session[:current_message] = {
-          #   message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id
-          # }
+        rescue Telegram::Bot::Exceptions::ResponseError => e
+          e.error_code
         end
       end
     end

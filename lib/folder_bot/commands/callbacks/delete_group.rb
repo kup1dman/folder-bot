@@ -4,7 +4,7 @@ module FolderBot
       class DeleteGroup < Command
         def call
           group_name = @message.data.scan(/group_name=([^&]+)/).flatten[0]
-          Models::Group.find_by(:name, group_name).delete
+          Models::Group.find_by(:name, group_name)&.delete
 
           keyboard = inline_keyboard(back_button: { text: '« Назад в список групп', callback_data: '/list_of_groups' })
           edit_message(
@@ -13,7 +13,8 @@ module FolderBot
             'Группа удалена!',
             reply_markup: keyboard
           )
-          # @session[:current_message] = { message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id }
+        rescue Telegram::Bot::Exceptions::ResponseError => e
+          e.error_code
         end
       end
     end

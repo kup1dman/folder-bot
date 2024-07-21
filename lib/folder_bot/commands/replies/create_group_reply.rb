@@ -12,11 +12,11 @@ module FolderBot
           else
             keyboard = inline_keyboard(['Попробуйте еще раз'], ['/create_group'])
             send_message(@bot, @message, result.join('и '), reply_markup: keyboard)
-
           end
-          # @session[:current_message] = { message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id }
 
           @session.clear :current_context
+        rescue Telegram::Bot::Exceptions::ResponseError => e
+          e.error_code
         end
       end
     end

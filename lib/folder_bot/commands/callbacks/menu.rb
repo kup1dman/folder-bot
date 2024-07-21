@@ -10,7 +10,8 @@ module FolderBot
             'Что хотите сделать',
             reply_markup: keyboard
           )
-          # @session[:current_message] = { message_id: current_bot_message.message_id, chat_id: current_bot_message.chat.id }
+        rescue Telegram::Bot::Exceptions::ResponseError => e
+          e.error_code
         end
       end
     end
