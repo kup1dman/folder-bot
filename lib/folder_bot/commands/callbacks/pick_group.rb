@@ -7,14 +7,7 @@ module FolderBot
           group = Models::Group.find(@message.data.scan(/group_id=([^&]+)/).flatten[0])
 
           send_message(@bot, @message, "Группа #{group.name}")
-          file_ids = group.files.map(&:file_id)
-          file_types = group.files.map(&:type)
-          files = file_ids.zip(file_types).to_h
-          if files.empty?
-            send_message(@bot, @message, 'Пока тут пусто')
-          else
-            send_media_group(@bot, @message, create_input_media_document(files))
-          end
+          send_files(group)
 
           keyboard = inline_keyboard(['Добавить файлы', 'Изменить имя группы', 'Удалить группу'],
                                      [
@@ -26,6 +19,17 @@ module FolderBot
           send_message(@bot, @message, 'Список действий', reply_markup: keyboard)
         rescue Telegram::Bot::Exceptions::ResponseError => e
           e.error_code
+        end
+
+        def send_files(group)
+          files = group.files.map(&:file_id).zip(group.files.map(&:type)).to_h
+          if files.empty?
+            send_message(@bot, @message, 'Пока тут пусто')
+          else
+            create_input_media_document(files).each_value do |media|
+              send_media_group(@bot, @message, media) unless media.empty?
+            end
+          end
         end
       end
     end

@@ -2,9 +2,7 @@ module FolderBot
   module Helpers
     module MediaHelper
       def send_media_group(bot, message, media)
-        media.each_value do |arr|
-          bot.api.send_media_group(chat_id: message.from.id, media: arr) unless arr.empty?
-        end
+        bot.api.send_media_group(chat_id: message.from.id, media: media)
       end
 
       def create_input_media_document(files)
