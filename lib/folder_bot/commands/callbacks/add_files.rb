@@ -3,8 +3,7 @@ module FolderBot
     module Callbacks
       class AddFiles < Command
         def call
-          group_name = @message.data.scan(/group_name=([^&]+)/).flatten[0]
-          group = Models::Group.find_by(:name, group_name)
+          group = Models::Group.find(@message.data.scan(/group_id=([^&]+)/).flatten[0])
           @session[:current_group] = group.id
 
           delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id })

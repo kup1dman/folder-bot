@@ -10,7 +10,7 @@ module FolderBot
             send_message(@bot, @message, 'Имя успешно изменено!', reply_markup: keyboard)
           else
             keyboard = inline_keyboard(['Попробуйте еще раз'],
-                                       ["/edit_group_name?group_name=#{Models::Group.find(@session[:current_group]).name}"])
+                                       ["/edit_group_name?group_id=#{@session[:current_group]}"])
             send_message(@bot, @message, result.join('и '), reply_markup: keyboard)
           end
 

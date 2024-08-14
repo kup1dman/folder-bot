@@ -3,8 +3,7 @@ module FolderBot
     module Callbacks
       class DeleteGroup < Command
         def call
-          group_name = @message.data.scan(/group_name=([^&]+)/).flatten[0]
-          Models::Group.find_by(:name, group_name)&.delete
+          Models::Group.find(@message.data.scan(/group_id=([^&]+)/).flatten[0])&.delete
 
           keyboard = inline_keyboard(back_button: { text: '« Назад в список групп', callback_data: '/list_of_groups' })
           edit_message(

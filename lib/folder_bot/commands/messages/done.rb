@@ -4,7 +4,9 @@ module FolderBot
       class Done < Command
         def call
           if @session[:current_context] == '/add_files_reply'
-            keyboard = inline_keyboard(back_button: { text: '« Назад в список групп', callback_data: '/list_of_groups' })
+            group_name = Models::Group.find(@session[:current_group]).name
+            keyboard = inline_keyboard(back_button: { text: '« Назад в группу',
+                                                      callback_data: "/pick_group?group_id=#{@session[:current_group]}" })
             send_message(@bot, @message, 'Файлы сохранены.', reply_markup: keyboard)
             @session.clear :current_context
           else

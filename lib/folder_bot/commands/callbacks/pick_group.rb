@@ -4,22 +4,23 @@ module FolderBot
       class PickGroup < Command
         def call
           delete_message(@bot, { message_id: @message.message.message_id, chat_id: @message.message.chat.id })
-          group_name = @message.data.scan(/group_name=([^&]+)/).flatten[0]
+          group = Models::Group.find(@message.data.scan(/group_id=([^&]+)/).flatten[0])
 
-          send_message(@bot, @message, "Группа #{group_name}")
-          group = Models::Group.find_by(:name, group_name)
+          send_message(@bot, @message, "Группа #{group.name}")
           file_ids = group.files.map(&:file_id)
-          if file_ids.empty?
+          file_types = group.files.map(&:type)
+          files = file_ids.zip(file_types).to_h
+          if files.empty?
             send_message(@bot, @message, 'Пока тут пусто')
           else
-            send_media_group(@bot, @message, create_input_media_document(file_ids))
+            send_media_group(@bot, @message, create_input_media_document(files))
           end
 
           keyboard = inline_keyboard(['Добавить файлы', 'Изменить имя группы', 'Удалить группу'],
                                      [
-                                       "/add_files?group_name=#{group_name}",
-                                       "/edit_group_name?group_name=#{group_name}",
-                                       "/delete_group?group_name=#{group_name}"
+                                       "/add_files?group_id=#{group.id}",
+                                       "/edit_group_name?group_id=#{group.id}",
+                                       "/delete_group?group_id=#{group.id}"
                                      ],
                                      back_button: { text: '« Назад в список групп', callback_data: '/list_of_groups' })
           send_message(@bot, @message, 'Список действий', reply_markup: keyboard)

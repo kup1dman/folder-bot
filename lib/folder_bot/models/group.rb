@@ -10,7 +10,7 @@ module FolderBot
       end
 
       def save
-        validated_name = name if name.length <= 20
+        validated_name = name if name.length <= 20 #переписать валидацию
         FolderBot::ADAPTER.execute 'INSERT INTO groups (name, user_id) VALUES (?, ?)', validated_name, user_id
         self.id = FolderBot::ADAPTER.execute('SELECT last_insert_rowid() FROM groups')[0][0]
 
@@ -37,6 +37,7 @@ module FolderBot
       end
 
       def update(**options)
+        options[:name] = nil if options[:name].length > 20 #переписать валидацию
         sql_keys = options.map { |key, _| "#{key} = ?" }.join(', ')
         sql_values = options.values
         begin
@@ -55,6 +56,7 @@ module FolderBot
       end
 
       def delete
+        FolderBot::ADAPTER.execute('DELETE FROM files WHERE group_id=?', id)
         FolderBot::ADAPTER.execute('DELETE FROM groups  WHERE id=?', id)
 
         true
@@ -76,7 +78,7 @@ module FolderBot
       def files
         data = FolderBot::ADAPTER.execute('SELECT * FROM files WHERE group_id=?', id)
         data.map do |elem|
-          File.new(id: elem[0], file_id: elem[1], group_id: elem[2], user_id: elem[3])
+          File.new(id: elem[0], file_id: elem[1], group_id: elem[2], user_id: elem[3], type: elem[4])
         end
       end
     end

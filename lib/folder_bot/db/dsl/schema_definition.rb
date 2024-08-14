@@ -38,6 +38,12 @@ module FolderBot
           FolderBot::ADAPTER.execute sql_table
         end
 
+        def add_column(column_name, column_type, options)
+          sql_column = "#{column_name} #{TYPES[column_type]}"
+          sql_alter_table = "ALTER TABLE #{@table_name} ADD #{sql_column}"
+          FolderBot::ADAPTER.execute sql_alter_table
+        end
+
         def sql_options(options)
           return if options.empty?
 

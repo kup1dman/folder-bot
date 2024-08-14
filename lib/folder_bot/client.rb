@@ -23,7 +23,7 @@ module FolderBot
         case message
         when Telegram::Bot::Types::Message
           handle_data(bot, message, data: message.text, type: :messages) if message.text && message.reply_to_message.nil?
-          handle_data(bot, message, data: @session[:current_context], type: :replies) if message.reply_to_message || message.document
+          handle_data(bot, message, data: @session[:current_context], type: :replies) if message.reply_to_message || message.document || message.photo
         when Telegram::Bot::Types::CallbackQuery
           handle_data(bot, message, data: message.data, type: :callbacks)
         end
